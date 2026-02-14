@@ -1,0 +1,22 @@
+export default {
+    "wrong_credentials": "نام کاربری یا کلمه عبور اشتباه میباشد",
+    "account_blocked": "حساب کاربری شما مسدود میباشد",
+    "account_disabled":"حساب کاربری شما غیرفعال میباشد",
+    "no_access": "ابتدا باید وارد شوید",
+    "logout_success": "با موفقیت خارج شدید",
+    "login_success": "با موفقیت وارد شدید",
+    "validation_email_required":"ایمیل الزامیست!",
+    "validation_isEmail":"ایمیل وارد شده معتبر نمیباشد!",
+    "validation_password_required":"کلمه عبور الزامیست!",
+    "profile": "ویرایش پروفایل",
+    "profile_save": "ذخیره",
+    "profile_back": "بازگشت",
+    "first_name": "نام",
+    "last_name": "نام خانوادگی",
+    "avatar": "آواتار",
+    "pass1": "کلمه عبور فعلی",
+    "pass2": "کلمه عبور جدید",
+    "pass3": "تکرار کلمه عبور جدید",
+    "password_change_hint": "اگر قصد تغییر کلمه عبور را ندارید فیلد زیر را خالی بگذارید",
+    "delete_avatar": "حذف آواتار"
+};

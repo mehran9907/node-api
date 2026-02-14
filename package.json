@@ -1,0 +1,29 @@
+{
+  "name": "node-shop-admin",
+  "version": "1.0.0",
+  "main": "app.js",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon -e html,css,js,json,env"
+  },
+  "dependencies": {
+    "auto-bind": "^5.0.1",
+    "connect-redis": "^6.1.3",
+    "dotenv": "^16.0.1",
+    "dotenv-expand": "^8.0.3",
+    "express": "^4.18.1",
+    "express-fileupload": "^1.4.0",
+    "express-validator": "^6.14.2",
+    "html-entities": "^2.6.0",
+    "i18next": "^21.9.1",
+    "ioredis": "^5.2.3",
+    "moment": "^2.29.4",
+    "moment-jalaali": "^0.9.6",
+    "moment-timezone": "^0.5.35",
+    "mongoose": "^8.16.1",
+    "rate-limiter-flexible": "^7.1.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  }
+}

@@ -1,0 +1,23 @@
+export default {
+    "page_title": "افزودن دسته بندی",
+    "page_title_edit": "ویرایش دسته بندی",
+    "parent_id": "والد دسته",
+    "title": "عنوان دسته بندی",
+    "main": "دسته اصلی",
+    "status": "وضعیت",
+    "parent_id_is_required": "دسته والد احباری است",
+    "title_is_required": "عنوان دسته بندی اجباری است",
+    "title_seo_is_required": "عنوان سئو اجباری است",
+    "description_seo_is_required": "توضیحات سئو اجباری است",
+    "save_success": "دسته بندی با موفقیت ایجاد شد",
+    "edit_success": "دسته بندی با موفقیت ویرایش شد",
+    "status_changed": "وضعیت دسته بندی با موفقیت تغییر یافت",
+    "delete_success": "دسته بندی با موفقیت حذف شد",
+    "delete_error": "مشکلی در حذف دسته بندی پیش آمده. لطفا بعدا تلاش کنید",
+    "no_record": "دسته بندی نامعتبر است!",
+    "childـexists": "دسته بندی حاوی فرزند می باشد!",
+    "invalid_parent_id": "والد وارد شده نامعتبر است",
+    "invalid_category": "دسته بندی نامعتبر می باشد!",
+    "title_already_exists": "عنوان وارد شده از قبل وجود دارد",
+    "slug_already_exists": "slug وارد شده از قبل وجود دارد"
+};
