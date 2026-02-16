@@ -185,6 +185,49 @@ export default class UserController extends BaseController {
         }
     }
 
+    async updateProfile(req, res) {
+        try {
+            const result = await this.#saveProfileValidation(req);
+            if (!result.isEmpty()) {
+                let error = {};
+                switch(result?.errors[0]?.msg) {
+                    case '4':
+                        error = {"code": 4, "msg": "New password is required", "is_auth": 0};
+                        break;
+                    case '5':
+                        error = {"code": 5, "msg": "New password confirmation is required", "is_auth": 0};
+                        break;
+                    case '6':
+                        error = {"code": 6, "msg": "New password and confirmation are not match", "is_auth": 0};
+                        break;
+                    default:
+                        error = result?.errors[0]?.msg;
+                }
+                return res.json(error);
+            }
+    
+            const first_name = this.safeString(this.input(req.body.first_name));
+            const last_name = this.safeString(this.input(req.body.last_name));
+            const email = this.safeString(this.input(req.body.email));
+            const current_password = this.safeString(this.input(req.body.current_password));
+            const new_password = this.safeString(this.input(req.body.new_password));
+            const new_password_confirm = this.safeString(this.input(req.body.new_password_confirm));
+            const updateResult = await this.#adminModel.saveProfile(req?.userToken?.user_id, first_name, last_name, email, current_password, new_password, new_password_confirm);
+            switch(updateResult) {
+                case -1:
+                    return res.json({"code": 7, "msg": "Email already exists!", "is_auth": 0});
+                case -2:
+                    return res.json({"code": 8, "msg": "Current password is invalid", "is_auth": 0});
+                case 1:
+                    const user = await this.#adminModel.getProfile(req?.userToken?.user_id);
+                    const userData = await this.#adminModel.getUserData(user);
+                    return res.json({"code": 0, "msg": "User profile updated successfully", "is_auth": 0, "data": userData});
+            }
+        } catch (e) {
+            return super.toError(e, req, res);
+        }
+    }
+
     async refreshToken(req, res) {
         try {
             const access_token = this.safeString(this.input(req.body.access_token));
@@ -215,22 +258,24 @@ export default class UserController extends BaseController {
     }
 
     async #saveProfileValidation(req) {
-        await body('first_name').not().isEmpty().withMessage('err1').run(req);
-        await body('last_name').not().isEmpty().withMessage('err2').run(req);
-        await body('email').not().isEmpty().withMessage('err3').isEmail().withMessage('err4').run(req);
-        await body(['pass1', 'pass2', 'pass3']).custom(() => {
-            const pass1 = this.input(req.body.pass1);
-            const pass2 = this.input(req.body.pass2);
-            const pass3 = this.input(req.body.pass3);
-            if (pass1 !== "") {
-                if (pass2 === "") {
-                    throw new Error("err7");
+        await body('first_name').not().isEmpty().withMessage({"code": 1, "msg": "First name is required", "is_auth": 0}).run(req);
+        await body('last_name').not().isEmpty().withMessage({"code": 2, "msg": "Last name is required", "is_auth": 0}).run(req);
+        const email = this.input(req.body.email);
+        if (email !== "")
+            await body('email').isEmail().withMessage({"code": 3, "msg": "Email is not valid", "is_auth": 0}).run(req);
+        await body(['current_password', 'new_password', 'new_password_confirm']).custom(() => {
+            const current_password = this.input(req.body.current_password);
+            const new_password = this.input(req.body.new_password);
+            const new_password_confirm = this.input(req.body.new_password_confirm);
+            if (current_password !== "") {
+                if (new_password === "") {
+                    throw new Error(4);
                 }
-                if (pass3 === "") {
-                    throw new Error("err8");
+                if (new_password_confirm === "") {
+                    throw new Error(5);
                 }
-                if (pass2 !== pass3) {
-                    throw new Error("err9");
+                if (new_password !== new_password_confirm) {
+                    throw new Error(6);
                 }
             }
             return true;

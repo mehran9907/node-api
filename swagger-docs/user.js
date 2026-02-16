@@ -163,5 +163,71 @@ export default {
                 },
             }
         }
+    },
+    "/user/update-profile": {
+        "put": {
+            "tags": ["Users"],
+            "summary": "Update user profile",
+            "description": "Update user profile",
+            "produces": [
+                "application/json"
+            ],
+            "parameters": [
+                {
+                    "name": "x-token",
+                    "in": "header",
+                    "description": "user token",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "name": "first_name",
+                    "in": "formData",
+                    "description": "User first name",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "name": "last_name",
+                    "in": "formData",
+                    "description": "User last name",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "name": "email",
+                    "in": "formData",
+                    "description": "User email",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "name": "current_password",
+                    "in": "formData",
+                    "description": "User old password",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "name": "new_password",
+                    "in": "formData",
+                    "description": "User new password",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "name": "new_password_confirm",
+                    "in": "formData",
+                    "description": "User new password confirmation",
+                    "required": false,
+                    "type": "string"
+                }
+            ],
+            "responses": {
+                "200": {
+                    "description": "successful",
+                },
+            }
+        }
     }
 };

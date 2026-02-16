@@ -11,6 +11,7 @@ try {
     route.get('/logout', new AuthMiddleware().checkLogin, userController.logout);
     route.put('/upload-avatar', new AuthMiddleware().checkLogin, userController.uploadAvatar);
     route.delete('/delete-avatar', new AuthMiddleware().checkLogin, userController.deleteAvater);
+    route.put('/update-profile', new AuthMiddleware().checkLogin, userController.updateProfile);
 }
 catch (e) {
     route.use(userController.errorHandling(e.toString()));

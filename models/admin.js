@@ -74,28 +74,28 @@ export default class AdminModel {
         }
     }
 
-    async saveProfile(admin_id, data) {
+    async saveProfile(admin_id, first_name, last_name, email, current_password, new_password, new_password_confirm) {
         try {
             const currentUser = await this.getProfile(admin_id);
             const last_edit_date_time = datetime.toString();
+            const data = {first_name, last_name, last_edit_date_time};
 
-            data["last_edit_date_time"] = last_edit_date_time;
-            if (currentUser?.email !== data.email) {
-                const emailExists = await this.checkEmail(data.email);
-                if (emailExists > 0) {
-                    return -1; // Email is already exists
+            if (email != "") {
+                if (currentUser?.email !== email) {
+                    const emailExists = await this.checkEmail(email);
+                    if (emailExists > 0) {
+                        return -1; // Email is already exists
+                    }
+                    data['email'] = email;
                 }
             }
-            if (data.pass1 !== "" && data.pass2 !== "" && data.pass3 !== "") { // User decide to change passwprd
-                if (this.#hashPassword(data.pass1, currentUser?._id + '') !== currentUser?.password) {
+            if (current_password !== "" && new_password !== "" && new_password_confirm !== "") {
+                if (this.#hashPassword(current_password, currentUser?._id + '') !== currentUser?.password) {
                     return -2; // Old password is invalid
                 } else {
-                    data['password'] = this.#hashPassword(data.pass3, currentUser?._id + '');
+                    data['password'] = this.#hashPassword(new_password_confirm, currentUser?._id + '');
                 }
             }
-            delete data.pass1;
-            delete data.pass2;
-            delete data.pass3;
 
             await this.model.updateOne({ _id: admin_id },{ $set: data });
             return 1;
