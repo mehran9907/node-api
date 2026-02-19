@@ -86,19 +86,12 @@ export default class BaseController
         }
     }
 
-    getSortType(req) {
+    getLimit(req) {
         try {
-            return (req.session?.sort_type === 'asc') ? 1 : -1;
+            let limit = this.toNumber(this.input(req?.query?.limit));
+            return (limit <= 0 || limit > 100) ? getEnv("ROWS_PER_PAGE", "number") : limit;
         } catch (e) {
-            return -1;
-        }
-    }
-
-    getSortField(req) {
-        try {
-            return req.session?.sort_field;
-        } catch (e) {
-            return '_id';
+            return getEnv("ROWS_PER_PAGE", "number");
         }
     }
 
@@ -127,31 +120,21 @@ export default class BaseController
 
     handlePagination(req, sortFields) {
         try {
-            if (!req.session?.sort_type) {
-                req.session.sort_type = 'desc';
-            }
-
-            if (req.query?.sort_type === 'asc')
-                req.session.sort_type = 'asc';
-            else if (req.query?.sort_type === 'desc')
-                req.session.sort_type = 'desc';
-            
-            if (!req.session?.sort_field)
-                req.session.sort_field = '_id';
-
-            if (sortFields.includes(req.query?.sort_field))
-                req.session.sort_field = req.query?.sort_field;
+            let sort_field = "_id";
+            if (req?.query?.sort_field && sortFields.includes(req.query?.sort_field))
+                sort_field = req.query?.sort_field;
 
             const page = this.getPage(req);
-            const sort_field = this.getSortField(req);
-            const sort_type = this.getSortType(req);
+            const sort_type = (req?.query?.sort_type === 'asc') ? 1 : -1;
+            const limit = this.getLimit(req);
 
-            return { page, sort_field, sort_type };
+            return { page, sort_field, sort_type, limit };
         } catch (e) {
             return {
                 "page":1,
                 "sort_field": "_id",
-                "sort_type": -1
+                "sort_type": -1,
+                "limit": getEnv("ROWS_PER_PAGE", "number")
             };
         }
     }

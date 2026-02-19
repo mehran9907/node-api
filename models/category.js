@@ -8,9 +8,9 @@ export default class CategoryModel {
         this.model = MongoDB.db.model("category", CategorySchema);
     }
 
-    async add(data) {
+    async add(parent_id, title, slug, status, title_seo, description_seo) {
         const last_edit_date_time = datetime.toString();
-        data.parent_id = data.parent_id === "0" ? null : data.parent_id;
+        parent_id = (parent_id === "0") ? null : parent_id;
         data["last_edit_date_time"] = last_edit_date_time;
         
         const titleExists = await this.#checkTitle(data.parent_id, data.title);
@@ -51,7 +51,7 @@ export default class CategoryModel {
         }
     }
 
-    async pagination(page, sortField, sortType, parent_id, title) {
+    async pagination(limit, page, sortField, sortType, parent_id, title) {
         const where = {};
 
         if (parent_id !== '') {
@@ -64,7 +64,7 @@ export default class CategoryModel {
             where['title'] = {$regex: '.*' + title + '.*', "$options": "i"};
         }
 
-        const per_page = getEnv("ROWS_PER_PAGE", 'num');
+        const per_page = limit;
         const from = per_page * page - per_page;
         const totalRows = await this.model.findOne(where).countDocuments();
         const totalPages = Math.ceil(totalRows / per_page);

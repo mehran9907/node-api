@@ -1,10 +1,7 @@
 import BaseController from "../core/BaseController.js";
-import translate from "../core/translate.js";
 import CategoryModel from "../models/category.js";
 import { body, validationResult } from "express-validator";
-import { getEnv, getPath, log, toObjectId } from "../core/utils.js";
-import { checkImgMime, fileNameGenerator, toByte } from "../core/uploader.js";
-import { fileExists, unlink } from "../core/fs.js";
+import { getEnv, toObjectId } from "../core/utils.js";
 
 export default class CategoryController extends BaseController {
     #categoryModel = null;
@@ -15,149 +12,75 @@ export default class CategoryController extends BaseController {
         this.#categoryModel = new CategoryModel();
     }
 
-    async add(req, res) {
-        try {
-            const categories = await this.#categoryModel.getMainCategories();
-            const data = {
-                "title": translate.t('category.page_title'),
-                "form_data": req?.session?.category_add_data,
-                "categories": categories
-            };
-            return res.render("category/add", data);
-        } catch (e) {
-            return super.toError(e, req, res);
-        }
-    }
-
     async #validation(req) {
-        await body('parent_id').not().isEmpty().withMessage('err1').run(req);
-        await body('title').not().isEmpty().withMessage('err2').run(req);
-        await body('slug').not().isEmpty().withMessage('err3').custom(() => {
+        await body('parent_id').not().isEmpty().withMessage({"code": 1, "msg": "Parent ID is required", "is_auth": 0}).run(req);
+        await body('title').not().isEmpty().withMessage({"code": 2, "msg": "Title is required", "is_auth": 0}).run(req);
+        await body('slug').not().isEmpty().withMessage({"code": 3, "msg": "Slug is required", "is_auth": 0}).custom(() => {
             const slug = this.input(req.body.slug);
             const check = /^[a-z0-9-]+$/.test(slug);
             if (check)
                 return true;
             else
-                throw new Error("err4");
+                throw new Error(4);
         }).run(req);
-        await body('title_seo').not().isEmpty().withMessage('err5').run(req);
-        await body('description_seo').not().isEmpty().withMessage('err6').run(req);
+        await body('title_seo').not().isEmpty().withMessage({"code": 5, "msg": "SEO title is required", "is_auth": 0}).run(req);
+        await body('description_seo').not().isEmpty().withMessage({"code": 6, "msg": "SEO description is required", "is_auth": 0}).run(req);
         return validationResult(req);
-    }
-
-    async postAdd(req, res) {
-        try {
-            if(!this.checkCsrfToken(req)) {
-                return res.redirect(`${this.#url}add?msg=invalid-csrf`);
-            }
-
-            const parent_id = this.safeString(this.input(req.body.parent_id));
-            const title = this.safeString(this.input(req.body.title));
-            const slug = this.safeString(this.input(req.body.slug));
-            const title_seo = this.safeString(this.input(req.body.title_seo));
-            const description_seo = this.safeString(this.input(req.body.description_seo));
-            const status = this.safeString(this.input(req.body.status));
-
-            const formData = {parent_id, title, slug, title_seo, description_seo, status}
-            req.session.category_add_data = formData;
-
-            const result = await this.#validation(req);
-
-            if(!result.isEmpty()) {
-                return res.redirect(`${this.#url}add?msg=${result?.errors[0]?.msg}`);
-            } else {
-                if (parent_id !== "0") {
-                    if (!toObjectId(parent_id)) {
-                        return res.redirect(`${this.#url}add?msg=invalid_parent_id`);
-                    }
-                }
-                const result = await this.#categoryModel.add(formData);
-                if (result?._id) {
-                    delete req?.session?.category_add_data;
-                    return res.redirect(`${this.#url}add?msg=ok`);
-                } else if(result === -1) {
-                    return res.redirect(`${this.#url}add?msg=err7`);
-                } else if(result === -2) {
-                    return res.redirect(`${this.#url}add?msg=err8`);
-                } else {
-                    return res.redirect(`${this.#url}add?msg=err`);
-                }
-            }
-        } catch (e) {
-            return super.toError(e, req, res);
-        }
     }
 
     async index(req, res) {
         try {
-            const sortFields = ['_id', 'parent_id', 'title', 'last_edit_date_time', 'status'];
-            const {page, sort_field, sort_type} = this.handlePagination(req, sortFields);
-            const status_id = toObjectId(this.input(req.query.status_id), true);
-            const status = this.toNumber(this.input(req.query.status));
+            // const categories = await this.#categoryModel.
+            const sortFields = ["_id", "parent_id", "title", "last_edit_date_time", "status"];
+            const {page, sort_field, sort_type, limit} = this.handlePagination(req, sortFields);
             const {params, params_query} = this.#getParams(req);
-            const url = this.#url + '?' + params_query;
-            const delete_url = this.#url + 'delete/';
-
-            if (status_id !== '') {
-                await this.#categoryModel.changeStatus(status_id, status);
-                return res.redirect(url + `&page=${page}&msg=status-changed`);
-            }
-
-            const categories = await this.#categoryModel.getMainCategories();
-            const pagination = await this.#categoryModel.pagination(page, sort_field, sort_type, params?.parent_id, params?.title);
-
+            const pagination = await this.#categoryModel.pagination(limit, page, sort_field, sort_type, params?.parent_id, params?.title);
             const data = {
-                "title": translate.t("menu_category_list"),
-                "rows": pagination.rows,
-                "categories": categories,
-                "total_rows": pagination.totalRows,
-                "total_pages": pagination.totalPages,
-                "url": url,
-                "delete_url": delete_url,
-                "params": params,
-                "sortFields": sortFields,
-                "page": page,
-                "basePath": this.#basePath,
-                "paramsQuery": params_query
+                "pagination": pagination,
+                "page": page
             };
-            return res.render("category/index", data);
+            return res.json({"code": 0, "msg": "List all categories", "is_auth": 0, "data": data});
         } catch (e) {
             return super.toError(e, req, res);
         }
     }
 
-    async edit(req, res) {
+    async add(req, res) {
         try {
-            let { page } = this.getPage(req);
-            page = (page > 1) ? page : 1;
-            const {params, params_query} = this.#getParams(req);
-            const back_url = this.#url + '?' + params_query + `&page=${page}`;
-            const categories = await this.#categoryModel.getMainCategories();
-            const categoryID = toObjectId(this.input(req.params.id), true);
-
-            if (categoryID === '') {
-                return res.redirect(back_url);
+            const result = await this.#validation(req);
+            if (!result.isEmpty()) {
+                if(result?.errors[0]?.msg == "4") {
+                    return res.json({"code": 4, "msg": "Category slug is not valid", "is_auth": 0});
+                } else {
+                    return res.json(result?.errors[0]?.msg);
+                }
             }
-                
-            const row = await this.#categoryModel.getCategory(categoryID);
+            const parent_id = this.safeString(this.input(req.body.parent_id));
+            const title = this.safeString(this.input(req.body.title));
+            const title_seo = this.safeString(this.input(req.body.title_seo));
+            const description_seo = this.safeString(this.input(req.body.description_seo));
+            const slug = this.safeString(this.input(req.body.slug));
+            let status = this.safeString(this.input(req.body.status));
+            status = (status === "1") ? true : false;
 
-            if (!row) {
-                return res.redirect(back_url);
+            if (parent_id !== "0") {
+                if (!toObjectId(parent_id)) {
+                    return res.json({"code": 7, "msg": "Parent ID is not valid", "is_auth": 0});
+                }
             }
 
-            let rowJSON = row.toJSON();
-            rowJSON.parent_id = rowJSON.parent_id + '';
-
-            log(rowJSON);
-
-            const data = {
-                "title": translate.t("category.page_title_edit"),
-                "categories": categories,
-                "back_url": back_url,
-                
-                "row": rowJSON
-            };
-            return res.render("category/edit", data);
+            const addResult = await this.#categoryModel.add(parent_id, title, slug, status, title_seo, description_seo);
+            if (typeof addResult === 'number') {
+                switch (addResult) {
+                    case -1:
+                        return res.json({"code": 9, "msg": "Title already exists! Please choose another one", "is_auth": 0});
+                    case -2:
+                        return res.json({"code": 10, "msg": "Slug already exists! Please choose another one", "is_auth": 0});
+                }
+            } else if (addResult?._id)
+                return res.json({"code": 0, "msg": "Category added successfully", "is_auth": 0, "data": result});
+            else
+                return res.json({"code": 8, "msg": "Something went wrong! Please try again later", "is_auth": 0});
         } catch (e) {
             return super.toError(e, req, res);
         }

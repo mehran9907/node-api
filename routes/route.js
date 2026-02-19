@@ -6,5 +6,5 @@ import categoryRoute from './category.js';
 const route = Router();
 route.use('/', homeRoute);
 route.use('/user/', userRoute);
-// route.use('/category/', categoryRoute);
+route.use('/category/', categoryRoute);
 export default route;
