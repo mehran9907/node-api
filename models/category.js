@@ -77,7 +77,7 @@ export default class CategoryModel {
         };
     }
 
-    async changeStatus(status_id, status) {
+    async changeStatus(id, status) {
         try {
             const last_edit_date_time = datetime.toString();
             const data = {"status": status, "last_edit_date_time": last_edit_date_time};
@@ -92,7 +92,7 @@ export default class CategoryModel {
 
     async getCategory(id) {
         try {
-            return await this.model.findOne({"_id": id});
+            return await this.model.findOne({"_id": id}).populate('parent_id', {title: 1});
         } catch (e) {
             return {};
         }

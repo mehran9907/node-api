@@ -45,6 +45,65 @@ export default class CategoryController extends BaseController {
         }
     }
 
+    async show(req, res) {
+        try {
+            const id = toObjectId(this.input(req.params.id), true);
+            if (id === '') {
+                return res.json({"code": 1, "msg": "Invalid category id!", "is_auth": 0});
+            }
+            const category = await this.#categoryModel.getCategory(id);
+            
+            if (category?._id)
+                return res.json({"code": 0, "msg": "success", "is_auth": 0, "category": category});
+            else
+                return res.json({"code": 2, "msg": "Category not found!", "is_auth": 0});
+        } catch (e) {
+            return super.toError(e, req, res);
+        }
+    }
+
+    async changeStatus(req, res) {
+        const id = toObjectId(this.input(req.params.id));
+        let status = this.safeString(this.input(req.body.status));
+        if (id === '') {
+            return res.json({"code": 1, "msg": "Invalid category id!", "is_auth": 0});
+        }
+        const category = await this.#categoryModel.getCategory(id);
+        if (category?._id) {
+            status = (status === "1") ? true : false;
+            let result = await this.#categoryModel.changeStatus(id, status);
+            switch (result) {
+                case 1:
+                    return res.json({"code": 0, "msg": "Category status has changed", "is_auth": 0, "data": category});
+                case 0:
+                    return res.json({"code": 3, "msg": "Something went wrong. Please try again later", "is_auth": 0});
+            }
+        } else
+            return res.json({"code": 2, "msg": "Category not found", "is_auth": 0});
+    }
+
+    async remove(req, res) {
+        const id = toObjectId(this.input(req.params.id));
+        if (id === '') {
+            return res.json({"code": 1, "msg": "Invalid category id!", "is_auth": 0});
+        }
+        const category = await this.#categoryModel.getCategory(id);
+        if (category?._id) {
+            const result = await this.#categoryModel.delete(id);
+            switch (result) {
+                case -1:
+                    return res.json({"code": 1, "msg": "Invalid category id!", "is_auth": 0});
+                case 1:
+                    return res.json({"code": 0, "msg": "Category has been removed", "is_auth": 0});
+                case 0:
+                    return res.json({"code": 3, "msg": "Something went wrong. Please try again later", "is_auth": 0});
+                case -2:
+                    return res.json({"code": 4, "msg": "You can not remove a parent category which contains child!", "is_auth": 0});
+            }
+        } else
+            return res.json({"code": 2, "msg": "Category not found", "is_auth": 0});
+    }
+
     async add(req, res) {
         try {
             const result = await this.#validation(req);
