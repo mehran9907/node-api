@@ -199,6 +199,13 @@ export default {
                     ],
                     "required": false,
                     "type": "string"
+                },
+                {
+                    "name": "slug",
+                    "in": "formData",
+                    "description": "category slug",
+                    "required": false,
+                    "type": "string"
                 }
             ],
             "responses": {

@@ -107,11 +107,9 @@ export default class CategoryModel {
         if (!currentRow)
             return -1;
 
-        data.parent_id = (data.parent_id === "0") ? null : data.parent_id;
-
         const last_edit_date_time = datetime.toString();
-        data.parent_id = data.parent_id === "0" ? null : data.parent_id;
         data["last_edit_date_time"] = last_edit_date_time;
+        data.parent_id = (data.parent_id === "0") ? null : data.parent_id;
         
         if (currentRow['title'] !== data.title) {
             const titleExists = await this.#checkTitle(data.parent_id, data.title);
@@ -130,7 +128,7 @@ export default class CategoryModel {
         if (currentRow['parent_id'] != data.parent_id) {
             const parentExists = await this.#checkTitle(data.parent_id, data.title);
             if (parentExists > 0)
-                return -3;
+                return -4;
         } else
             delete data.parent_id;
 

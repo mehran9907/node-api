@@ -145,18 +145,9 @@ export default class CategoryController extends BaseController {
         }
     }
 
-    async postEdit(req, res) {
+    async update(req, res) {
         try {
-            const categoryID = toObjectId(this.input(req.params.id), true);
-            let { page } = this.getPage(req);
-            page = (page > 1) ? page : 1;
-            const {params, params_query} = this.#getParams(req);
-            const url = this.#url + `edit/${categoryID}?` + params_query + `&page=${page}`;
-            
-            if(!this.checkCsrfToken(req)) {
-                return res.redirect(`${url}&msg=invalid-csrf`);
-            }
-
+            const id = toObjectId(this.input(req.params.id), true);
             const parent_id = this.safeString(this.input(req.body.parent_id));
             const title = this.safeString(this.input(req.body.title));
             const slug = this.safeString(this.input(req.body.slug));
@@ -169,25 +160,33 @@ export default class CategoryController extends BaseController {
             const result = await this.#validation(req);
 
             if(!result.isEmpty()) {
-                return res.redirect(`${url}&msg=${result?.errors[0]?.msg}`);
+                if(result?.errors[0]?.msg == "4")
+                    return res.json({"code": 4, "msg": "Category slug is not valid", "is_auth": 0});
+                else
+                    return res.json(result?.errors[0]?.msg);
             } else {
-                if (parent_id !== "0") {
-                    if (!toObjectId(parent_id)) {
-                        return res.redirect(`${url}&msg=invalid_parent_id`);
+                if (id === '') {
+                    return res.json({"code": 7, "msg": "Category ID is not valid", "is_auth": 0});
+                }
+                const category = await this.#categoryModel.getCategory(id);
+                if (category?._id) {
+                    const result = await this.#categoryModel.update(id, formData);
+                    switch(result) {
+                        case -1:
+                            return res.json({"code": 8, "msg": "Category not found", "is_auth": 0});
+                        case -2:
+                            return res.json({"code": 9, "msg": "Another category with the same title exists!", "is_auth": 0});
+                        case -3:
+                            return res.json({"code": 10, "msg": "There is another category with the same slug!", "is_auth": 0});
+                        case -4:
+                            return res.json({"code": 11, "msg": "There is another category with the same parent and title!", "is_auth": 0});
+                        case 0:
+                            return res.json({"code": 12, "msg": "Something went wrong! Please try again later.", "is_auth": 0});
+                        case 1:
+                            return res.json({"code": 0, "msg": "Category updated successfully", "is_auth": 0});
                     }
-                }
-                const result = await this.#categoryModel.update(categoryID, formData);
-                if (result === 1) {
-                    return res.redirect(`${url}&msg=success`);
-                } else if (result === -1) {
-                    return res.redirect(`${url}&msg=err9`);
-                } else if(result === -2) {
-                    return res.redirect(`${url}&msg=err7`);
-                } else if(result === -3) {
-                    return res.redirect(`${url}&msg=err8`);
-                } else {
-                    return res.redirect(`${url}&msg=err`);
-                }
+                } else
+                    return res.json({"code": 8, "msg": "Category not found", "is_auth": 0});
             }
         } catch (e) {
             return super.toError(e, req, res);
